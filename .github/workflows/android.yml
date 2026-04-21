@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Android APK
 
 on:
   push:
@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -21,31 +21,32 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Web App
+      - name: Build Vite app
         run: npm run build
 
-      - name: Setup Java
+      - name: Setup Java (required for Android)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Sync Capacitor
+      - name: Sync Capacitor Android
         run: npx cap sync android
-        
-      - name: Recreate Android (Fix Wrapper)
+
+      # 🔥 أهم خطوة لحل مشاكل wrapper التالف
+      - name: Recreate Android safely
         run: |
           rm -rf android
           npx cap add android
           npx cap sync android
-          
-      - name: Build APK
+
+      - name: Build APK (Debug)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-apk
