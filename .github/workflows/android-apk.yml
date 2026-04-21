@@ -12,7 +12,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ✔ Node 22 (مطلوب Capacitor الجديد)
+      # ✔ Node 22 (مطلوب Capacitor)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -33,14 +33,14 @@ jobs:
           npm install --include=optional --legacy-peer-deps
 
       # ✔ Fix missing dependency from recharts
-      - name: Fix missing dependency (react-is)
+      - name: Install missing dependency (react-is)
         run: npm install react-is --legacy-peer-deps
 
-      # ✔ Rebuild native modules (rollup fix)
+      # ✔ Rebuild native modules
       - name: Rebuild dependencies
         run: npm rebuild
 
-      # ✔ CI flag (important for vite.config.ts tailwind disable)
+      # ✔ CI flag (for vite.config.ts to disable tailwind plugin in CI)
       - name: Set CI flag
         run: echo "CI=true" >> $GITHUB_ENV
 
@@ -52,17 +52,21 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # ✔ Fix Gradle wrapper (حل الخطأ jarfile)
-      - name: Fix Gradle wrapper
+      # ✔ FIX Gradle wrapper corruption (IMPORTANT)
+      - name: Fix Gradle Wrapper (rebuild)
         run: |
           cd android
-          chmod +x gradlew
-          ./gradlew wrapper --gradle-version 8.7
+          rm -f gradle/wrapper/gradle-wrapper.jar
+          curl -L https://services.gradle.org/distributions/gradle-8.7-bin.zip -o gradle.zip
+          unzip -q gradle.zip -d /tmp/gradle
+          export PATH=$PATH:/tmp/gradle/gradle-8.7/bin
+          gradle wrapper --gradle-version 8.7
 
       # ✔ Build APK
       - name: Build APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
 
       # ✔ Upload APK
