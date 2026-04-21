@@ -44,6 +44,12 @@ export const SettingsPanel: React.FC = () => {
 
   const durations = categoryDurations[selectedGoal] || { low: 15, normal: 25, high: 45 };
 
+  React.useEffect(() => {
+    return () => {
+      soundService.stop();
+    };
+  }, []);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {

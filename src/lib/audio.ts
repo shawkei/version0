@@ -7,11 +7,24 @@ export type SoundType = 'digital' | 'chime' | 'pulse';
 
 class SoundService {
   private ctx: AudioContext | null = null;
+  private activeSources: (AudioBufferSourceNode | OscillatorNode)[] = [];
 
   private initCtx() {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+  }
+
+  stop() {
+    this.activeSources.forEach(source => {
+      try {
+        source.stop();
+        source.disconnect();
+      } catch (e) {
+        // Source might already be stopped
+      }
+    });
+    this.activeSources = [];
   }
 
   async play(type: SoundType | 'custom', customData?: string | null) {
@@ -21,6 +34,9 @@ class SoundService {
     if (this.ctx.state === 'suspended') {
       await this.ctx.resume();
     }
+
+    // Stop current sounds before playing new ones
+    this.stop();
 
     const now = this.ctx.currentTime;
     
@@ -45,7 +61,6 @@ class SoundService {
   private async playCustom(data: string) {
     if (!this.ctx) return;
     try {
-      // Decode base64
       const response = await fetch(data);
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
@@ -53,6 +68,12 @@ class SoundService {
       const source = this.ctx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(this.ctx.destination);
+      
+      this.activeSources.push(source);
+      source.onended = () => {
+        this.activeSources = this.activeSources.filter(s => s !== source);
+      };
+      
       source.start();
     } catch (e) {
       console.error('Failed to play custom audio', e);
@@ -74,6 +95,7 @@ class SoundService {
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
+    this.activeSources.push(osc);
     osc.start(now);
     osc.stop(now + 0.2);
   }
@@ -94,6 +116,7 @@ class SoundService {
       osc.connect(gain);
       gain.connect(this.ctx!.destination);
 
+      this.activeSources.push(osc);
       osc.start(now + i * 0.1);
       osc.stop(now + i * 0.1 + 0.5);
     });
@@ -115,6 +138,7 @@ class SoundService {
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
+    this.activeSources.push(osc);
     osc.start(now);
     osc.stop(now + 0.3);
   }
