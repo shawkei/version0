@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Clean Android APK
 
 on:
   push:
@@ -9,51 +9,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # 1) Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # ✔ Node 22 (مطلوب Capacitor)
+      # 2) Node (مهم جدًا Capacitor + Vite)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # ✔ Java
+      # 3) Java (موحد بدون تعقيد)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      # ✔ Clean install (fix all npm issues)
-      - name: Clean install dependencies
+      # 4) Clean install (استقرار كامل npm)
+      - name: Install dependencies clean
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
-          npm install --include=optional --legacy-peer-deps
+          npm install --legacy-peer-deps
 
-      # ✔ Fix missing dependency (recharts issue)
-      - name: Install missing dependency (react-is)
+      # 5) Fix missing dependency (recharts safe)
+      - name: Fix missing deps
         run: npm install react-is --legacy-peer-deps
 
-      # ✔ Rebuild native modules
-      - name: Rebuild dependencies
-        run: npm rebuild
+      # 6) Build Web (Vite)
+      - name: Build Web App
+        run: |
+          rm -rf dist
+          npm run build
 
-      # ✔ CI flag (disable Tailwind oxide in CI)
-      - name: Set CI flag
-        run: echo "CI=true" >> $GITHUB_ENV
+      # 7) Verify build output
+      - name: Check dist output
+        run: ls -la dist
 
-      # ✔ Build web app (Vite)
-      - name: Build web app
-        run: npm run build
-
-      # ✔ Capacitor sync
+      # 8) Sync Capacitor (clean)
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          rm -rf android/app/src/main/assets/public
+          npx cap sync android
 
-      # ✔ FIX Gradle wrapper (8.13 REQUIRED)
-      - name: Fix Gradle Wrapper (8.13)
+      # 9) Fix Gradle wrapper (stable version)
+      - name: Fix Gradle Wrapper
         run: |
           cd android
           rm -f gradle/wrapper/gradle-wrapper.jar
@@ -62,16 +63,16 @@ jobs:
           export PATH=$PATH:/tmp/gradle/gradle-8.13/bin
           gradle wrapper --gradle-version 8.13
 
-      # ✔ Build APK
+      # 10) Build APK
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      # ✔ Upload APK artifact
+      # 11) Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
