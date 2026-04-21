@@ -7,19 +7,22 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useFocusStore } from '../store/useStore';
 import { Sparkles, Flame, Clock, Trophy } from 'lucide-react';
-import { getFocusInsight } from '../lib/gemini';
+import { getFocusInsight } from '../lib/insights';
 
 export const StatsView: React.FC = () => {
   const { stats, sessions } = useFocusStore();
-  const [insight, setInsight] = useState<string>("Thinking...");
+  const [insight, setInsight] = useState<string>("CALIBRATING...");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function updateInsight() {
       setLoading(true);
+      // Simulate a small delay for a "processing" feel without any network call
       const text = await getFocusInsight(sessions);
-      setInsight(text);
-      setLoading(false);
+      setTimeout(() => {
+        setInsight(text);
+        setLoading(false);
+      }, 300);
     }
     updateInsight();
   }, [sessions.length]);
@@ -44,7 +47,7 @@ export const StatsView: React.FC = () => {
           <Sparkles size={20} md:size={22} strokeWidth={2} />
         </div>
         <div className="relative z-10 flex-1">
-          <p className="text-[10px] uppercase font-black tracking-[0.4em] text-accent-blue mb-1 md:mb-2">NEURAL.GEN</p>
+          <p className="text-[10px] uppercase font-black tracking-[0.4em] text-accent-blue mb-1 md:mb-2">SYSTEM.INSIGHT</p>
           <p className={`text-sm md:text-base font-rounded font-black text-white leading-tight ${loading ? 'animate-pulse' : ''}`}>
              "{insight}"
           </p>
