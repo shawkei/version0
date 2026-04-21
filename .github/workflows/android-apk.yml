@@ -9,8 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -23,33 +22,29 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # 🔴 أهم خطوة: منع optional deps بالكامل أثناء install
-      - name: Install dependencies safely
+      - name: Clean install dependencies (fix native modules)
         run: |
-          npm ci --legacy-peer-deps --omit=optional
+          rm -rf node_modules package-lock.json
+          npm cache clean --force
+          npm install --include=optional --legacy-peer-deps
 
-      # 🔴 ضمان عدم تحميل native bindings
-      - name: Force clean rebuild of node modules
-        run: npm rebuild
+      - name: Rebuild Rollup
+        run: npm rebuild rollup
 
-      # 🔴 بناء الويب
       - name: Build web app
         run: npm run build
 
-      # 🔴 Capacitor sync
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # 🔴 بناء APK
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      # 🔴 رفع APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
