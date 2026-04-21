@@ -23,17 +23,17 @@ export default defineConfig(({mode}) => {
           orientation: 'portrait',
           icons: [
             {
-              src: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=192&h=192&fit=crop&q=80',
+              src: '/icon.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=512&h=512&fit=crop&q=80',
+              src: '/icon.png',
               sizes: '512x512',
               type: 'image/png'
             },
             {
-              src: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=512&h=512&fit=crop&q=80',
+              src: '/icon.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
