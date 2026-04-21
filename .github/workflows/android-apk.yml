@@ -34,7 +34,11 @@ jobs:
       # ✔️ هنا مكان الـ CI flag
       - name: Set CI flag
         run: echo "CI=true" >> $GITHUB_ENV
+        
 
+      - name: Fix missing dependency (react-is)
+        run: npm install react-is --legacy-peer-deps
+  
       - name: Build web app
         run: npm run build
 
